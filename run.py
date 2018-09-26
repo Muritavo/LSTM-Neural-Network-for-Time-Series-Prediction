@@ -31,10 +31,10 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     plt.show()
 
 def main():
-	configs = json.load(open('config.json', 'r'))
+	configs = json.load(open(os.path.join(os.path.dirname(__file__), './config.json'), 'r'))
 
 	data = DataLoader(
-		os.path.join('data', configs['data']['filename']),
+		os.path.join(os.path.dirname(__file__), 'data', configs['data']['filename']),
 		configs['data']['train_test_split'],
 		configs['data']['columns']
 	)
@@ -80,5 +80,34 @@ def main():
 	plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
 	#plot_results(predictions, y_test)
 
+def predict():
+	configs = json.load(open(os.path.join(os.path.dirname(__file__), './config.json'), 'r'))
+
+	data = DataLoader(
+		os.path.join(os.path.dirname(__file__), 'data', configs['data']['filename']),
+		configs['data']['train_test_split'],
+		configs['data']['columns']
+	)
+	
+	model = Model()
+	model.load_model(os.path.join(os.path.dirname(__file__), "./../LSTM-Models/26092018-022010-e1.h5"))
+
+	x_test, y_test = data.get_test_data(
+		seq_len = configs['data']['sequence_length'],
+		normalise = configs['data']['normalise']
+	)
+
+	switchy = 0
+	if switchy == 0:
+		predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
+		plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
+	if switchy == 1:
+		predictions = model.predict_point_by_point(x_test)
+	if switchy == 2:
+		predictions = model.predict_sequence_full(x_test, configs['data']['sequence_length'])
+	if switchy == 1 or switchy == 2:
+		plot_results(predictions, y_test)
+
+
 if __name__=='__main__':
-	main()
+	predict()
