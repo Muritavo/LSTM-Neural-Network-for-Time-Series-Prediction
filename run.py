@@ -4,12 +4,19 @@ __version__ = "2.0.0"
 __license__ = "MIT"
 
 import os
+import sys
 import json
 import time
 import math
 import matplotlib.pyplot as plt
 from core.data_processor import DataLoader
 from core.model import Model
+
+CONFIG = sys.argv[1]
+MODEL = sys.argv[2]
+DATA = sys.argv[3]
+OPERATION = sys.argv[4]
+TYPE = sys.argv[5]
 
 def plot_results(predicted_data, true_data):
     fig = plt.figure(facecolor='white')
@@ -31,10 +38,10 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     plt.show()
 
 def main():
-	configs = json.load(open(os.path.join(os.path.dirname(__file__), './config.json'), 'r'))
+	configs = json.load(open(CONFIG, 'r'))
 
 	data = DataLoader(
-		os.path.join(os.path.dirname(__file__), 'data', configs['data']['filename']),
+		DATA,
 		configs['data']['train_test_split'],
 		configs['data']['columns']
 	)
@@ -65,7 +72,8 @@ def main():
 		),
 		epochs = configs['training']['epochs'],
 		batch_size = configs['training']['batch_size'],
-		steps_per_epoch = steps_per_epoch
+		steps_per_epoch = steps_per_epoch,
+		model_path = MODEL
 	)
 	
 	x_test, y_test = data.get_test_data(
@@ -73,41 +81,45 @@ def main():
 		normalise = configs['data']['normalise']
 	)
 
-	predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
+	#predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
 	#predictions = model.predict_sequence_full(x_test, configs['data']['sequence_length'])
 	#predictions = model.predict_point_by_point(x_test)        
 
-	plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
+	#plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
 	#plot_results(predictions, y_test)
+	sys.stdout.write("--END--")
 
 def predict():
-	configs = json.load(open(os.path.join(os.path.dirname(__file__), './config.json'), 'r'))
+	configs = json.load(open(CONFIG, 'r'))
 
 	data = DataLoader(
-		os.path.join(os.path.dirname(__file__), 'data', configs['data']['filename']),
+		DATA,
 		configs['data']['train_test_split'],
 		configs['data']['columns']
 	)
 	
 	model = Model()
-	model.load_model(os.path.join(os.path.dirname(__file__), "./../LSTM-Models/26092018-022010-e1.h5"))
+	model.load_model(MODEL)
 
 	x_test, y_test = data.get_test_data(
 		seq_len = configs['data']['sequence_length'],
 		normalise = configs['data']['normalise']
 	)
 
-	switchy = 0
-	if switchy == 0:
+	if TYPE == "sequence":
 		predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
 		plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
-	if switchy == 1:
+	if TYPE == "point":
 		predictions = model.predict_point_by_point(x_test)
-	if switchy == 2:
+	if TYPE == "full":
 		predictions = model.predict_sequence_full(x_test, configs['data']['sequence_length'])
-	if switchy == 1 or switchy == 2:
+	if TYPE == "full" or TYPE == "point":
 		plot_results(predictions, y_test)
+	sys.stdout.write("--END--")
 
 
 if __name__=='__main__':
-	predict()
+	if OPERATION == "train":
+		main()
+	else:
+		predict()

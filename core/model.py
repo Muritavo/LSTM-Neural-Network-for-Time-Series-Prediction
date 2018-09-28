@@ -42,13 +42,13 @@ class Model():
 		print('[Model] Model Compiled')
 		timer.stop()
 
-	def train(self, x, y, epochs, batch_size):
+	def train(self, x, y, epochs, batch_size, model_path):
 		timer = Timer()
 		timer.start()
 		print('[Model] Training Started')
 		print('[Model] %s epochs, %s batch size' % (epochs, batch_size))
 		
-		save_fname = os.path.join(os.path.dirname(__file__), '../../LSTM-Models/%s-e%s.h5' % (dt.datetime.now().strftime('%d%m%Y-%H%M%S'), str(epochs)))
+		save_fname = model_path
 		print('File path : %s' % save_fname)
 		callbacks = [
 			EarlyStopping(monitor='val_loss', patience=2),
@@ -66,13 +66,13 @@ class Model():
 		print('[Model] Training Completed. Model saved as %s' % save_fname)
 		timer.stop()
 
-	def train_generator(self, data_gen, epochs, batch_size, steps_per_epoch):
+	def train_generator(self, data_gen, epochs, batch_size, steps_per_epoch, model_path):
 		timer = Timer()
 		timer.start()
 		print('[Model] Training Started')
 		print('[Model] %s epochs, %s batch size, %s batches per epoch' % (epochs, batch_size, steps_per_epoch))
 		
-		save_fname = os.path.join(os.path.dirname(__file__), '../../LSTM-Models/%s-e%s.h5' % (dt.datetime.now().strftime('%d%m%Y-%H%M%S'), str(epochs)))
+		save_fname = model_path
 		print('File path : %s' % save_fname)
 		callbacks = [
 			ModelCheckpoint(filepath=save_fname, monitor='loss', save_best_only=True)
