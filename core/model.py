@@ -4,6 +4,7 @@ import numpy as np
 import datetime as dt
 from numpy import newaxis
 from core.utils import Timer
+from keras import backend as K
 from keras.layers import Dense, Activation, Dropout, LSTM
 from keras.models import Sequential, load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -15,6 +16,7 @@ class Model():
 		self.model = Sequential()
 
 	def load_model(self, filepath):
+		K.clear_session()
 		print('[Model] Loading model from file %s' % filepath)
 		self.model = load_model(filepath)
 
@@ -97,8 +99,11 @@ class Model():
 	def predict_sequences_multiple(self, data, window_size, prediction_len):
 		#Predict sequence of 50 steps before shifting prediction run forward by 50 steps
 		prediction_seqs = []
+		data_size = len(data)
+		number_of_sequences = int(data_size / prediction_len)
+		offset = data_size - number_of_sequences * prediction_len
 		for i in range(int(len(data)/prediction_len)):
-			curr_frame = data[i*prediction_len]
+			curr_frame = data[i*prediction_len+offset]
 			predicted = []
 			for j in range(prediction_len):
 				predicted.append(self.model.predict(curr_frame[newaxis,:,:])[0,0])

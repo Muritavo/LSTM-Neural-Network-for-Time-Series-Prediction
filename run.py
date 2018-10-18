@@ -12,11 +12,7 @@ import matplotlib.pyplot as plt
 from core.data_processor import DataLoader
 from core.model import Model
 
-CONFIG = sys.argv[1]
-MODEL = sys.argv[2]
-DATA = sys.argv[3]
-OPERATION = sys.argv[4]
-TYPE = sys.argv[5]
+model = None
 
 def plot_results(predicted_data, true_data):
     fig = plt.figure(facecolor='white')
@@ -30,9 +26,10 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     fig = plt.figure(facecolor='white')
     ax = fig.add_subplot(111)
     ax.plot(true_data, label='True Data')
+    offset = len(true_data) - len(predicted_data) * prediction_len
     #Pad the list of predictions to shift it in the graph to it's correct start
     for i, data in enumerate(predicted_data):
-        padding = [None for p in range(i * prediction_len)]
+        padding = [None for p in range(i * prediction_len + offset)]
         plt.plot(padding + data, label='Prediction')
         plt.legend()
     plt.show()
@@ -81,11 +78,11 @@ def main():
 		normalise = configs['data']['normalise']
 	)
 
-	#predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
+	predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
 	#predictions = model.predict_sequence_full(x_test, configs['data']['sequence_length'])
 	#predictions = model.predict_point_by_point(x_test)        
 
-	#plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
+	plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
 	#plot_results(predictions, y_test)
 	sys.stdout.write("--END--")
 
@@ -98,9 +95,11 @@ def predict():
 		configs['data']['columns']
 	)
 	
-	model = Model()
-	model.load_model(MODEL)
-
+	global model
+	if model == None:
+		model = Model()
+		model.load_model(MODEL)
+	
 	x_test, y_test = data.get_test_data(
 		seq_len = configs['data']['sequence_length'],
 		normalise = configs['data']['normalise']
@@ -109,17 +108,32 @@ def predict():
 	if TYPE == "sequence":
 		predictions = model.predict_sequences_multiple(x_test, configs['data']['sequence_length'], configs['data']['sequence_length'])
 		plot_results_multiple(predictions, y_test, configs['data']['sequence_length'])
-	if TYPE == "point":
+	if TYPE == "point" or TYPE == "predict":
 		predictions = model.predict_point_by_point(x_test)
 	if TYPE == "full":
 		predictions = model.predict_sequence_full(x_test, configs['data']['sequence_length'])
 	if TYPE == "full" or TYPE == "point":
 		plot_results(predictions, y_test)
-	sys.stdout.write("--END--")
-
-
-if __name__=='__main__':
-	if OPERATION == "train":
-		main()
+	if TYPE == "predict":
+		predicted_value = data.denormalize_windows(predictions[-1], configs['data']['sequence_length'])
+		sys.stdout.write("--END--{}--END--\n".format(predicted_value))
 	else:
-		predict()
+		sys.stdout.write("--END--")
+
+		
+while True:
+	print("Trying")
+	ARGS = input()
+	if ARGS != None:
+		ARGS = ARGS.split(";")
+		print(ARGS)
+		CONFIG = ARGS[0]
+		MODEL = ARGS[1]
+		DATA = ARGS[2]
+		OPERATION = ARGS[3]
+		TYPE = ARGS[4]
+		if OPERATION == "train":
+			main()
+		else:
+			predict()
+	time.sleep(1)
